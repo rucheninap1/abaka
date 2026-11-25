@@ -2,25 +2,54 @@
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Математическая абака</title>
 <link rel="stylesheet" href="style.css"></head><body>
 <main>
-<header><div><h1>Математическая абака</h1><div id="role" class="muted">Подключаемся…</div><div id="connection"></div></div><div><div id="clock" class="clock">—</div><div id="phase" class="muted"></div></div></header>
+<header><div><h1>Математическая абака</h1><div id="role" class="muted">Подключаемся…</div><div id="connection"></div></div><div id="clockBox"><div id="clock" class="clock">—</div><div id="phase" class="muted"></div></div></header>
 <section id="fatal" class="card hidden"></section>
-<section id="host" class="hidden">
- <details id="adminSettings" class="card admin-settings" open><summary>Настройки игры и ссылки команд</summary><div class="bar between"><h2>Управление игрой</h2><a id="sheetLink" target="_blank" rel="noopener">Открыть таблицу задач и ответов ↗</a></div>
- <div id="draftSettings"><div class="settings"><div><label for="themes">Количество тем</label><input id="themes" type="number" min="1" max="12"></div><div><label for="tasks">Задач в каждой теме</label><input id="tasks" type="number" min="1" max="12"></div><div><label for="minutes">Время, минут</label><input id="minutes" type="number" min="1" max="300"></div></div>
- <label for="names">Команды или участники — по одному названию на строке (до 32)</label><textarea id="names" rows="4"></textarea><div class="bar"><button id="saveSettings">Сохранить настройки</button><small>После сохранения заполни активные задачи в Google-таблице.</small></div></div>
- <div id="settingsSummary" class="muted hidden"></div><div class="bar" style="margin-top:16px"><button id="start">Начать игру</button><button id="finish" class="danger">Завершить игру</button><button id="newGame" class="secondary">Новая игра</button></div>
- <p class="notes muted">На старте условия и ключи фиксируются. Изменения таблицы после старта применятся к следующей игре. Оценки текущей игры можно исправлять ниже.</p>
- <details><summary>Ссылки для подключения</summary><p><a id="publicLink" target="_blank" rel="noopener">Открыть общее табло ↗</a></p><div id="links" class="links"></div><small>Каждой команде — только её ссылка. Ссылку ведущей не передавай.</small></details></details>
- <div class="card"><div class="review-toolbar"><h2>Проверка ответов</h2><span id="reviewCount" class="review-count"></span></div><div class="review-filters"><label>Показывать<select id="reviewFilter" class="review-filter"><option value="pending">На проверке</option><option value="all">Все сдачи</option><option value="yes">Верные</option><option value="no">Неверные</option><option value="cancelled">Отменённые</option></select></label><label>Команда<select id="reviewTeam"><option value="all">Все команды</option></select></label></div><div class="review-workspace"><nav id="reviews" class="review-queue" aria-label="Очередь ответов"></nav><div id="reviewDetail" aria-live="polite"></div></div><p class="review-next-hint">Сначала самые ранние сдачи. После оценки в очереди «На проверке» откроется следующий ответ. Нажми на фото, чтобы увеличить.</p></div>
+
+<section id="home" class="hidden">
+ <div class="card"><h2>Создать игру</h2>
+  <p class="muted">Вы создаёте игру и отправляете командам одну ссылку. Команды сами вводят название и получают личную ссылку, ответы проверяются автоматически.</p>
+  <div class="settings"><div><label for="newTitle">Название игры</label><input id="newTitle" maxlength="80" placeholder="Например: Абака, 6 класс"></div><div><label for="newMinutes">Время игры, минут</label><input id="newMinutes" type="number" min="1" max="300" value="90"></div></div>
+  <div id="codeRow" class="hidden"><label for="newCode">Код создателя игр</label><input id="newCode" type="password" autocomplete="off"></div>
+  <label for="newPreset">Набор задач</label><select id="newPreset"></select>
+  <details class="tasks-edit"><summary>Посмотреть и изменить задачи</summary>
+   <p class="muted notes">Таблица со столбцами: Тема № · Название темы · Задача № · Условие · Проверка (Число / Текст / Набор чисел / Вручную / Разрезание) · Правильные ответы (варианты через |). Можно вставить из Google-таблицы или Excel. Для интерактивных разрезаний в условии есть метка вида [[puzzle:b1t10]].</p>
+   <textarea id="newTasks" rows="9" spellcheck="false"></textarea></details>
+  <p id="newTasksInfo" class="muted"></p>
+  <div class="bar"><button id="createBtn">Создать игру</button></div>
+ </div>
+ <div id="myGamesCard" class="card hidden"><h2>Мои игры</h2><div id="myGames"></div><p class="muted notes">Список хранится в этом браузере. Ссылку пульта (с ключом ведущей) никому не передавайте.</p></div>
 </section>
+
+<section id="joinBox" class="card hidden"><h2 id="joinTitle"></h2><p id="joinInfo" class="muted"></p>
+ <div id="joinForm"><label for="teamName">Название вашей команды</label><input id="teamName" maxlength="40" placeholder="Например: Ромашки" autocomplete="off"><div class="bar" style="margin-top:12px"><button id="joinBtn">Войти в игру</button></div>
+ <p class="muted notes">После входа сайт запомнит вашу команду на этом устройстве и покажет личную ссылку — сохраните её, чтобы продолжить с другого устройства.</p></div></section>
+
+<section id="host" class="hidden">
+ <div class="card"><h2>Ссылка на игру для команд</h2><p class="muted">Отправьте её командам — это всё, что нужно. Каждая команда введёт название и сразу получит свою личную ссылку.</p>
+  <div class="bar linkline"><input id="roomLink" readonly><button id="copyRoom">Копировать ссылку</button></div></div>
+ <div class="card"><div class="bar between"><h2>Команды</h2><span id="teamCount" class="review-count"></span></div><div id="teamList" class="scroll"></div>
+  <p class="muted notes">Команды появляются здесь сами, как только входят по ссылке. Личную ссылку можно скопировать, если команде нужно продолжить с другого устройства.</p></div>
+ <details id="adminSettings" class="card admin-settings" open><summary>Настройки и управление игрой</summary>
+ <div id="draftSettings"><div class="settings"><div><label for="setTitle">Название игры</label><input id="setTitle" maxlength="80"></div><div><label for="minutes">Время, минут</label><input id="minutes" type="number" min="1" max="300"></div></div>
+ <label for="preset2">Заменить набор задач</label><select id="preset2"></select>
+ <details class="tasks-edit"><summary>Задачи игры</summary><textarea id="tasksText" rows="9" spellcheck="false"></textarea></details><p id="tasksInfo" class="muted"></p>
+ <div class="bar"><button id="saveSettings">Сохранить настройки</button><small>Условия фиксируются при старте.</small></div></div>
+ <div id="settingsSummary" class="muted hidden"></div><div class="bar" style="margin-top:16px"><button id="start">Начать игру</button><button id="finish" class="danger">Завершить игру</button></div>
+ <p class="notes muted">Начать игру можно, когда команды вошли (команды могут входить и после старта). Оценки можно исправлять и после завершения. <a id="sheetLink" target="_blank" rel="noopener">Таблица с данными игры ↗</a> · <a id="homeLink" href="#">Создать другую игру</a></p></details>
+ <div class="card"><div class="review-toolbar"><h2>Проверка ответов</h2><span id="reviewCount" class="review-count"></span></div><div class="review-filters"><label>Показывать<select id="reviewFilter" class="review-filter"><option value="pending">На проверке</option><option value="all">Все сдачи</option><option value="yes">Верные</option><option value="no">Неверные</option><option value="cancelled">Отменённые</option></select></label><label>Команда<select id="reviewTeam"><option value="all">Все команды</option></select></label></div><div class="review-workspace"><nav id="reviews" class="review-queue" aria-label="Очередь ответов"></nav><div id="reviewDetail" aria-live="polite"></div></div><p class="review-next-hint">Числовые, текстовые ответы и разрезания проверяются автоматически. Здесь остаются только ответы «Вручную» и фотографии.</p></div>
+</section>
+
+<div id="gameView" class="hidden">
 <section id="participant" class="hidden"><div id="mySummary" class="card summary"></div><div class="card"><h2>Поле задач</h2><p id="taskHint" class="muted">Внутри темы ответы сдаются по порядку. У каждой задачи одна попытка.</p><div id="taskBoard" class="scroll"></div></div>
  <div id="answerPanel" class="card hidden"><h2 id="answerTitle"></h2><div id="statement" class="statement"></div><p id="existingAnswer" class="answer hidden"></p><div id="puzzleDone"></div><div id="answerForm"><div id="textAnswer"><label for="answer">Ответ</label><textarea id="answer" rows="3" placeholder="Число, слово или другой ответ"></textarea><label for="picture">Картинка с ответом (необязательно)</label><input id="picture" type="file" accept="image/jpeg,image/png,image/webp"><p class="muted notes">JPG, PNG или WebP до 4 МБ. Для набора чисел используй «;»: например, 12; 14. Можно отправить только картинку.</p></div><div id="puzzleBox" class="hidden"></div><button id="send">Отправить ответ</button><p id="sendNote" class="muted notes">После отправки изменить ответ может только ведущая.</p></div><p id="answerStatus"></p><button id="myPicture" class="secondary hidden">Посмотреть картинку</button></div>
  <details class="card"><summary>Мои отправленные ответы</summary><div id="myHistory"></div></details>
+ <details class="card"><summary>Личная ссылка команды</summary><p class="muted notes">Откройте её на другом устройстве, чтобы продолжить игру за эту же команду. Никому, кроме своей команды, не передавайте.</p><div class="bar linkline"><input id="myLink" readonly><button id="copyMy" class="secondary">Копировать</button></div></details>
 </section>
 <section class="card"><div class="bar between"><h2>Табло</h2><span id="provisional" class="tag pending hidden">Есть ответы на проверке — бонусы предварительные</span></div><div id="scoreboard" class="scroll"></div></section>
 <section class="card"><h2>Задачи всех команд</h2><div class="status-legend"><span class="tag yes">✓ Верно</span><span class="tag no">✕ Неверно</span><span class="tag pending">⌛ На проверке</span><span class="tag empty">— Не отправлено</span></div><div id="teamBoards" class="team-boards"></div></section>
 <section class="card"><h2>Бонусы</h2><div id="bonuses"></div></section>
 <details class="card"><summary>Правила игры</summary><div id="rules"></div></details>
+</div>
 <p class="foot">Ответы и время принимает сервер. При потере связи дождись подтверждения: повтор той же отправки не расходует дополнительную попытку. Табло обновляется автоматически.</p>
 </main><dialog id="imageDialog"><button id="closeImage" class="secondary">Закрыть</button><h2 id="imageHeading">Фото ответа</h2><p id="imageMessage"></p><img id="image" alt="Прикреплённый ответ"><div id="imageReviewActions" class="image-review-actions hidden"><label for="imageReviewNote">Комментарий команде (необязательно)</label><input id="imageReviewNote" placeholder="Пояснение к оценке"><div class="bar"><button id="imageYes" class="review-yes">✓ Верно</button><button id="imageNo" class="review-no">✕ Неверно</button></div></div></dialog><div id="toast" class="alert hidden" role="status"></div>
-<script src="config.js"></script><script src="puzzle.js"></script><script src="puzzle-ui.js"></script><script src="app.js"></script></body></html>
+<script src="config.js"></script><script src="presets.js"></script><script src="puzzle.js"></script><script src="puzzle-ui.js"></script><script src="app.js"></script></body></html>

@@ -12,3 +12,6 @@
 .pz-title{font-weight:650;margin-bottom:4px}.pz-svg{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px;cursor:crosshair;user-select:none;-webkit-user-select:none}
 .pz-note{font-size:13px;min-height:18px}.pz-status{padding:10px 14px;border-radius:10px;margin:8px 0;font-weight:600}.pz-status.wait{background:#fff2cb;color:#7b5a00}.pz-status.ok{background:#e2f4e9;color:#17633b}
 .pz-readonly .pz-svg,#puzzleDone .pz-svg{cursor:default;max-height:300px}.pz-hint{margin:4px 0}
+
+/* игры и линкер */
+.linkline{flex-wrap:nowrap}.linkline input{flex:1;min-width:0}.tasks-edit{margin:12px 0}.tasks-edit textarea{font:13px/1.4 ui-monospace,monospace;white-space:pre}#teamList td .bar{flex-wrap:nowrap}#teamList td{vertical-align:middle}#joinBox input{width:100%;max-width:420px}#home .settings{grid-template-columns:2fr 1fr}#home select{max-width:100%}@media(max-width:650px){#home .settings{grid-template-columns:1fr}.linkline{flex-wrap:wrap}}
