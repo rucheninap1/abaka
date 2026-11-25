@@ -13,5 +13,6 @@
 .pz-note{font-size:13px;min-height:18px}.pz-status{padding:10px 14px;border-radius:10px;margin:8px 0;font-weight:600}.pz-status.wait{background:#fff2cb;color:#7b5a00}.pz-status.ok{background:#e2f4e9;color:#17633b}
 .pz-readonly .pz-svg,#puzzleDone .pz-svg{cursor:default;max-height:300px}.pz-hint{margin:4px 0}
 
+.tag.skipped,.task.skipped,.team-cell.skipped{background:#e6e2f2;color:#4f4478}.pz-status.bad{background:#fbe8e9;color:#993544}
 /* игры и линкер */
 .linkline{flex-wrap:nowrap}.linkline input{flex:1;min-width:0}.tasks-edit{margin:12px 0}.tasks-edit textarea{font:13px/1.4 ui-monospace,monospace;white-space:pre}#teamList td .bar{flex-wrap:nowrap}#teamList td{vertical-align:middle}#joinBox input{width:100%;max-width:420px}#home .settings{grid-template-columns:2fr 1fr}#home select{max-width:100%}@media(max-width:650px){#home .settings{grid-template-columns:1fr}.linkline{flex-wrap:wrap}}

@@ -3,7 +3,7 @@
 var $=function(id){return document.getElementById(id);}, S=null, auth={}, selected=null, busy=false, pollTimer=null, request=null, requestSignature='', initialized=false, lastRecords='', offset=0, lastSuccess=0;
 var imageReviewId='',imageRequestToken=0;
 var reviewSelection='',reviewDrafts={},reviewDetailSignature='',reviewPhotoId='',reviewPhotoData='',reviewPhotoToken=0;
-var statusLabels={yes:'Верно',no:'Неверно',pending:'На проверке',cancelled:'Отменено'};
+var statusLabels={yes:'Верно',no:'Неверно',pending:'На проверке',cancelled:'Отменено',skipped:'Пропущено'};
 function el(tag,text,cls){var e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
 function show(id,yes){$(id).classList.toggle('hidden',!yes);}
 function toast(msg,error){$('toast').textContent=msg;$('toast').className='alert'+(error?' error':'');clearTimeout(toast.timer);toast.timer=setTimeout(function(){show('toast',false);},8000);}
@@ -43,11 +43,11 @@ function renderTeamBoards(){
   var head=el('thead'),header=el('tr');td(header,'Блок','th').scope='col';
   for(var n=1;n<=S.tasksPerTheme;n++)td(header,n*10,'th').scope='col';
   head.append(header);table.append(head);var body=el('tbody'),lookup={};
-  cells.forEach(function(c){if(['yes','no','pending'].includes(c.status))lookup[c.theme+':'+c.n]=c.status;});
+  cells.forEach(function(c){if(['yes','no','pending','skipped'].includes(c.status))lookup[c.theme+':'+c.n]=c.status;});
   for(var theme=1;theme<=S.themes;theme++){
    var row=el('tr');td(row,topicName(theme),'th').scope='row';
    for(var n=1;n<=S.tasksPerTheme;n++){
-    var status=lookup[theme+':'+n]||'empty',label=statusLabels[status]||'Не отправлено',symbol={yes:'✓',no:'✕',pending:'⌛',empty:'—'}[status];
+    var status=lookup[theme+':'+n]||'empty',label=statusLabels[status]||'Не отправлено',symbol={yes:'✓',no:'✕',pending:'⌛',skipped:'↷',empty:'—'}[status];
     var cell=el('td'),mark=el('div',undefined,'team-cell '+status);
     mark.title=topicName(theme)+' · задача '+n+' ('+n*10+' баллов): '+label;
     mark.setAttribute('aria-label',mark.title);mark.append(el('span',symbol));
@@ -99,7 +99,7 @@ function renderReviewDetail(r){
  }else if(!r.answer)body.append(el('p','К этой сдаче не приложен ответ.','muted'));
  var task=(S.taskInfo||[]).find(function(t){return t.theme===r.theme&&t.n===r.n;});
  if(task){var details=el('details',undefined,'statement-details');details.append(el('summary','Посмотреть условие'),el('p',Puzzle.stripMarker(task.text),'statement'));body.append(details);}
- if(r.status!=='cancelled'){
+ if(r.status==='skipped'){body.append(el('p','Команда пропустила эту задачу. Баллы не начисляются.'));var back=el('div',undefined,'bar');back.append(makeButton('Вернуть задачу команде',function(){if(confirm('Вернуть команде «'+teamName(r.team)+'» задачу '+r.n+', чтобы она решила её заново?'))saveReview(r.id,'cancelled');},'secondary'));body.append(back);card.append(body);}else if(r.status!=='cancelled'){
   var label=el('label','Комментарий команде (необязательно)','review-note-label');label.htmlFor='reviewNote';
   var note=el('input');note.id='reviewNote';note.className='review-note';note.placeholder='Например: части не совпадают по форме';note.value=Object.prototype.hasOwnProperty.call(reviewDrafts,r.id)?reviewDrafts[r.id]:(r.note||'');
   note.oninput=function(){reviewDrafts[r.id]=note.value;};body.append(label,note);
@@ -127,13 +127,13 @@ async function loadReviewPhoto(r,token){
 function renderParticipant(){var me=S.teams.find(function(t){return t.id===S.me.id;});$('mySummary').replaceChildren();[['Всего',me.total],['За задачи',me.base],['Бонусы',me.bonus],['На проверке',me.pending]].forEach(function(x){var d=el('div');d.append(el('div',x[0],'muted'),el('b',x[1]));$('mySummary').append(d);});$('taskBoard').replaceChildren();if(!S.start){$('taskBoard').append(el('p','Игра ещё не началась. Условия появятся после старта ведущей.','muted'));show('answerPanel',false);return;}var table=el('table',undefined,'board'),h=el('tr');td(h,'Тема','th');for(var n=1;n<=S.tasksPerTheme;n++)td(h,n*10,'th');table.append(h);for(var a=1;a<=S.themes;a++){var row=el('tr');td(row,topicName(a)).className='task-name';for(var b=1;b<=S.tasksPerTheme;b++){(function(theme,n){var r=ownActive().find(function(r){return r.theme===theme&&r.n===n;}),button=makeButton(String(n*10),function(){if(selected&&(selected.theme!==theme||selected.n!==n)&&($('answer').value||$('picture').files.length)){if(!confirm('Перейти к другой задаче? Неотправленный ответ будет очищен.'))return;}selected={theme:theme,n:n};request=null;requestSignature='';$('answer').value='';$('picture').value='';renderParticipant();$('answerPanel').scrollIntoView({behavior:'smooth',block:'nearest'});},'task'+(r?' '+r.status:'')+(selected&&selected.theme===theme&&selected.n===n?' selected':''));button.append(el('small',r?statusLabels[r.status]:permitted(theme,n)?'Можно сдать':'Просмотр'));var c=el('td');c.append(button);row.append(c);})(a,b);}table.append(row);}$('taskBoard').append(table);renderAnswer();$('myHistory').replaceChildren();(S.records||[]).slice().reverse().forEach(function(r){var p=el('div',undefined,'record');p.append(el('b',topicName(r.theme)+' · '+r.n+' · '+statusLabels[r.status]),el('p',isSolution(r.answer)?'(разрезание принято автоматически)':(r.answer||'(картинка)'),'answer'),el('small',timeText(r.time)));if(r.note)p.append(el('p',r.note));if(r.hasFile)p.append(makeButton('Картинка',function(){openPicture(r.id);},'secondary'));$('myHistory').append(p);});}
 function renderAnswer(){show('answerPanel',!!selected);if(!selected)return;var t=S.taskInfo.find(function(t){return t.theme===selected.theme&&t.n===selected.n;}),r=ownActive().find(function(r){return r.theme===selected.theme&&r.n===selected.n;}),pz=taskPuzzle(t);
  $('answerTitle').textContent=topicName(selected.theme)+' · задача '+selected.n+' · '+selected.n*10+' баллов';$('statement').textContent=t?Puzzle.stripMarker(t.text):'';
- show('existingAnswer',!!r&&!pz);$('existingAnswer').textContent=r?(r.answer||'(ответ на картинке)'):'';
+ var sk=!!r&&r.status==='skipped';show('existingAnswer',!!r&&(!pz||sk));$('existingAnswer').textContent=sk?'Вы пропустили эту задачу. Вернуться к ней нельзя, баллы за неё не начисляются.':r?(r.answer||'(ответ на картинке)'):'';
  show('textAnswer',!pz);show('puzzleBox',!!pz&&!r);$('send').textContent=pz?'Отправить решение':'Отправить ответ';show('sendNote',!pz);
  $('puzzleDone').replaceChildren();
  if(pz&&r&&isSolution(r.answer)){PuzzleUI.mount($('puzzleDone'),pz,{readonly:true,solution:r.answer});}
  if(pz&&!r){var key=S.game+'|'+selected.theme+'|'+selected.n;
   if(puzzleKey!==key||!puzzleCtl){puzzleKey=key;puzzleCtl=PuzzleUI.mount($('puzzleBox'),pz,{storageKey:'abaka_draft_'+key+'_'+(auth.team||'').slice(0,8)});}}
- show('answerForm',!r);$('send').disabled=busy||!permitted(selected.theme,selected.n);
+ show('answerForm',!r);$('send').disabled=busy||!permitted(selected.theme,selected.n);$('skip').disabled=busy||!running()||!permitted(selected.theme,selected.n);
  $('answerStatus').textContent=r?statusLabels[r.status]+(r.note?' — '+r.note:''):!running()?'Приём ответов закрыт.':!permitted(selected.theme,selected.n)?'Сначала отправь ответы на предыдущие задачи этой темы.':'';
  show('myPicture',!!(r&&r.hasFile));$('myPicture').onclick=r?function(){openPicture(r.id);}:null;}
 function closePicture(){
@@ -169,8 +169,10 @@ $('reviewFilter').onchange=$('reviewTeam').onchange=function(){lastRecords='';re
 $('imageYes').onclick=function(){saveImageReview('yes');};$('imageNo').onclick=function(){saveImageReview('no');};
 $('imageReviewNote').oninput=function(){if(imageReviewId){reviewDrafts[imageReviewId]=this.value;if(reviewSelection===imageReviewId&&$('reviewNote'))$('reviewNote').value=this.value;}};
 $('send').onclick=async function(){if(busy||!selected||!permitted(selected.theme,selected.n))return;var pzTask=taskPuzzle(S.taskInfo.find(function(t){return t.theme===selected.theme&&t.n===selected.n;})),answer,file;
-if(pzTask){if(!puzzleCtl||!puzzleCtl.ok()){toast('Пока не получилось: '+(puzzleCtl?puzzleCtl.message():'нарисуйте разрезание'),true);return;}answer=JSON.stringify(puzzleCtl.solution());file=null;if(!confirm('Отправить это решение на задачу '+selected.n+' темы «'+topicName(selected.theme)+'»? Оно уже проверено.'))return;}
+if(pzTask){if(!puzzleCtl||!puzzleCtl.ok()){toast('Пока не получилось: '+(puzzleCtl?'решение неверное':'нарисуйте разрезание'),true);return;}answer=JSON.stringify(puzzleCtl.solution());file=null;if(!confirm('Отправить это решение на задачу '+selected.n+' темы «'+topicName(selected.theme)+'»? Оно уже проверено.'))return;}
 else{answer=$('answer').value.trim();file=$('picture').files[0];if(!answer&&!file){toast('Введите ответ или приложите картинку',true);return;}if(!confirm('Отправить ответ на задачу '+selected.n+' темы «'+topicName(selected.theme)+'»? Это единственная попытка.'))return;}busy=true;var theme=selected.theme,n=selected.n;$('send').disabled=true;try{var signature=JSON.stringify([theme,n,answer,file?file.name:'',file?file.size:0,file?file.lastModified:0]);if(!request||signature!==requestSignature){request={id:crypto.randomUUID(),theme:theme,n:n,answer:answer,file:await readFile(file)};requestSignature=signature;}var result=await rpc('submitAnswer',[auth.game,auth.team,request]);toast('Ответ получен: '+statusLabels[result.status]);request=null;requestSignature='';$('answer').value='';$('picture').value='';}catch(e){toast(e.message+' При сбое связи можно повторить отправку.',true);}finally{busy=false;await refresh();}};
+
+$('skip').onclick=async function(){if(busy||!selected||!running()||!permitted(selected.theme,selected.n))return;if(!confirm('Пропустить задачу '+selected.n+' темы «'+topicName(selected.theme)+'»? Вернуться к ней будет нельзя, баллы за неё не начисляются.'))return;busy=true;$('skip').disabled=true;$('send').disabled=true;var theme=selected.theme,n=selected.n;try{await rpc('submitAnswer',[auth.game,auth.team,{id:crypto.randomUUID(),theme:theme,n:n,skip:true}]);toast('Задача пропущена');request=null;requestSignature='';$('answer').value='';$('picture').value='';}catch(e){toast(e.message,true);}finally{busy=false;await refresh();}};
 
 /* ===== игры, вход команд, линкер ведущей ===== */
 var presets=window.ABAKA_PRESETS||[];

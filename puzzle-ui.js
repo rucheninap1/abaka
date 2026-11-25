@@ -77,10 +77,10 @@ function mount(box,def,opts){
   boards.forEach(function(b,i){draw(b);
    var ok=b.res.ok;
    if(b.title)b.title.textContent='Способ '+(i+1)+(ok?' ✓':'');
-   b.note.textContent=ok?'':b.res.msg;b.note.style.display=(def.boards>1&&!ro)?'':'none';});
+   b.note.textContent='';b.note.style.display='none';});
   var r=ctl.result;
-  status.className='pz-status '+(r.ok?'ok':'wait');
-  status.textContent=ro?'':(r.ok?'✓ '+(def.boards>1?'Верно! Три разных разрезания.':boards[0].res.msg)+' Можно отправлять.':r.msg);
+  var any=boards.some(function(b){return b.cuts.size||b.paint.length;});status.className='pz-status '+(r.ok?'ok':any?'bad':'wait');
+  status.textContent=ro?'':(r.ok?'✓ Верно! Можно отправлять.':any?'✕ Неверно':'Нарисуйте разрезы по линиям сетки.');
   if(ro)status.style.display='none';
   if(!ro&&opts.storageKey)lsSet(opts.storageKey,JSON.stringify(ctl.solution()));
   if(opts.onChange)opts.onChange(ctl);
